@@ -81,14 +81,14 @@
             <section id="logbook" class="py-20">
                 <h2 class="font-orbitron text-5xl text-center text-white mb-12 section-title">Experience & Research</h2>
                 <div class="space-y-12 max-w-5xl mx-auto">
-                    <!-- Education, Research, Work Experience cards... -->
+                    <!-- Education, Research, Work Experience cards will be here -->
                 </div>
             </section>
             
             <section id="voyages" class="py-20">
                 <h2 class="font-orbitron text-5xl text-center text-white mb-12 section-title">Core Projects</h2>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                    <!-- Project Cards... -->
+                    <!-- Project Cards will be here -->
                 </div>
             </section>
 
@@ -215,7 +215,9 @@
                     </knowledge_base>
                 `;
                 
+                // This logic prevents one failed question from confusing the next one.
                 const currentTurnHistory = [...chatHistory, { role: "user", parts: [{ text: userQuery }] }];
+
                 const payload = { contents: currentTurnHistory, systemInstruction: { parts: [{ text: systemPrompt }] }, };
 
                 try {
@@ -224,13 +226,17 @@
                     const result = await response.json();
                     const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || "[UNKNOWN]";
                     
+                    // Add the user's message to the main history
                     chatHistory.push({ role: "user", parts: [{ text: userQuery }] });
 
                     if (aiResponse.trim() === "[UNKNOWN]") {
                         const forwardMessage = "That's a great question! I don't have that info right now, so I've sent it to the real Deekshitth to get an answer.";
                         appendMessage(forwardMessage, 'ai');
                         forwardQuestionToBackend(userQuery);
+                        // Also add the forwarding message to the history to keep the conversation flow valid
+                        chatHistory.push({ role: "model", parts: [{ text: forwardMessage }] });
                     } else {
+                        // If the answer is valid, add it to the history
                         chatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
                         appendMessage(aiResponse, 'ai');
                     }
@@ -254,6 +260,7 @@
             chatInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') { sendMessageToAI(); } });
 
             const forwardQuestionToBackend = async (question) => {
+                // IMPORTANT: Make sure this URL is correct and your ngrok server is running
                 const yourServerUrl = 'https://unblindfolded-unforcedly-samson.ngrok-free.dev/forward-question';
                 try {
                     await fetch(yourServerUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
