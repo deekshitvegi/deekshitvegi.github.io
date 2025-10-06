@@ -401,15 +401,34 @@
             const chatInput = document.getElementById('chat-input');
             const chatWindow = document.getElementById('chat-window');
             
+            // --- NEW: A default "starter brain" for the AI ---
+            // This ensures the AI always knows the basics, even if the server connection fails.
+            const initialKnowledgeBase = `
+                - Name: Deekshitth Vegi
+                - Current Role: M.S. in Artificial Intelligence student at the University of North Texas.
+                - Education History: B.Tech in Mechanical Engineering from IIITDM Kurnool.
+                - Key Skills: Python, SQL, JavaScript, PyTorch, TensorFlow, Hugging Face, React, Node.js.
+                - Hobbies & Passions:
+                    - Gaming: Plays competitive games, especially Valorant.
+                    - Anime: Huge fan of One Piece. Also enjoys Interstellar.
+                    - Music: Favorite artist is The Weeknd. Favorite song is "Blinding Lights".
+                    - Travel: Born in India, has traveled to Thailand and Japan, and is currently in the USA. Japan is his favorite country.
+                - Memorable Moment: A peak life moment was attending The Weeknd's concert in Dallas on August 28th, 2025.
+            `;
+
             // This variable will hold the dynamic knowledge base from the server
-            let dynamicKnowledgeBase = '';
+            let dynamicKnowledgeBase = initialKnowledgeBase; // Start with the default knowledge
             
-            // --- NEW: Function to fetch knowledge base from the server ---
+            // --- UPDATED: Function to fetch *additional* knowledge ---
             const fetchKnowledgeBase = async () => {
                 const yourServerUrl = 'https://unblindfolded-unforcedly-samson.ngrok-free.dev/get-knowledge';
                 try {
                     const response = await fetch(yourServerUrl);
-                    dynamicKnowledgeBase = await response.text();
+                    const serverKnowledge = await response.text();
+                    // Add the server's knowledge to the initial knowledge
+                    if (serverKnowledge) {
+                        dynamicKnowledgeBase += "\n" + serverKnowledge;
+                    }
 
                     // Enable chat once knowledge is loaded
                     const welcomeMessage = "Hey there! I'm AI Deekshitth. Ask me anything about my projects, skills, or what I'm passionate about. Go on, let's chat! 🚀";
@@ -420,9 +439,14 @@
                     chatHistory.push({ role: "model", parts: [{ text: welcomeMessage }] });
 
                 } catch (error) {
-                    console.error("Failed to load AI knowledge:", error);
+                    console.error("Failed to load AI knowledge from server, using initial knowledge:", error);
+                    // If the server fails, we can still proceed with the initial knowledge.
+                    const welcomeMessage = "Hey there! I'm AI Deekshitth (currently running on initial knowledge). Ask me anything!";
                     const firstMessage = chatWindow.querySelector('.ai-message');
-                    firstMessage.textContent = "Error: Could not connect to the AI's knowledge base. Please make sure the server is running.";
+                    firstMessage.textContent = welcomeMessage;
+                    chatInput.disabled = false;
+                    chatSendBtn.disabled = false;
+                    chatHistory.push({ role: "model", parts: [{ text: welcomeMessage }] });
                 }
             };
             
@@ -537,5 +561,6 @@
     </script>
 </body>
 </html>
+
 
 
