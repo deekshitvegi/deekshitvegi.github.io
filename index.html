@@ -401,8 +401,6 @@
             const chatInput = document.getElementById('chat-input');
             const chatWindow = document.getElementById('chat-window');
             
-            // --- NEW: A default "starter brain" for the AI ---
-            // This ensures the AI always knows the basics, even if the server connection fails.
             const initialKnowledgeBase = `
                 - Name: Deekshitth Vegi
                 - Current Role: M.S. in Artificial Intelligence student at the University of North Texas.
@@ -416,21 +414,21 @@
                 - Memorable Moment: A peak life moment was attending The Weeknd's concert in Dallas on August 28th, 2025.
             `;
 
-            // This variable will hold the dynamic knowledge base from the server
-            let dynamicKnowledgeBase = initialKnowledgeBase; // Start with the default knowledge
-            
-            // --- UPDATED: Function to fetch *additional* knowledge ---
+            let dynamicKnowledgeBase = initialKnowledgeBase;
+            let chatHistory = []; // Initialize chat history here
+
             const fetchKnowledgeBase = async () => {
                 const yourServerUrl = 'https://unblindfolded-unforcedly-samson.ngrok-free.dev/get-knowledge';
+                // --- NEW: Reset chat history on page load ---
+                chatHistory = []; 
+                
                 try {
                     const response = await fetch(yourServerUrl);
                     const serverKnowledge = await response.text();
-                    // Add the server's knowledge to the initial knowledge
                     if (serverKnowledge) {
                         dynamicKnowledgeBase += "\n" + serverKnowledge;
                     }
 
-                    // Enable chat once knowledge is loaded
                     const welcomeMessage = "Hey there! I'm AI Deekshitth. Ask me anything about my projects, skills, or what I'm passionate about. Go on, let's chat! 🚀";
                     const firstMessage = chatWindow.querySelector('.ai-message');
                     firstMessage.textContent = welcomeMessage;
@@ -440,7 +438,6 @@
 
                 } catch (error) {
                     console.error("Failed to load AI knowledge from server, using initial knowledge:", error);
-                    // If the server fails, we can still proceed with the initial knowledge.
                     const welcomeMessage = "Hey there! I'm AI Deekshitth (currently running on initial knowledge). Ask me anything!";
                     const firstMessage = chatWindow.querySelector('.ai-message');
                     firstMessage.textContent = welcomeMessage;
@@ -449,8 +446,6 @@
                     chatHistory.push({ role: "model", parts: [{ text: welcomeMessage }] });
                 }
             };
-            
-            let chatHistory = [];
 
             const sendMessageToAI = async () => {
                 const userQuery = chatInput.value;
@@ -488,10 +483,11 @@
                     </knowledge_base>
                 `;
                 
-                chatHistory.push({ role: "user", parts: [{ text: userQuery }] });
+                // --- IMPROVEMENT: Only add user query to history here ---
+                const currentTurnHistory = [...chatHistory, { role: "user", parts: [{ text: userQuery }] }];
 
                 const payload = {
-                    contents: chatHistory,
+                    contents: currentTurnHistory, // Use a temporary history for the API call
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                 };
 
@@ -506,12 +502,16 @@
                     const result = await response.json();
                     const candidate = result.candidates?.[0];
                     let aiResponse = candidate?.content?.parts?.[0]?.text || "[UNKNOWN]";
+                    
+                    // --- IMPROVEMENT: Update history AFTER getting a valid response ---
+                    chatHistory.push({ role: "user", parts: [{ text: userQuery }] });
 
                     if (aiResponse.trim() === "[UNKNOWN]") {
                         const forwardMessage = "That's a great question! I don't have that info right now, so I've sent it to the real Deekshitth to get an answer. Check back later!";
                         chatWindow.removeChild(typingIndicator);
                         appendMessage(forwardMessage, 'ai');
                         forwardQuestionToBackend(userQuery);
+                         // Do NOT add the "forwarding" message to the AI's memory
                     } else {
                         chatHistory.push({ role: "model", parts: [{ text: aiResponse }] });
                         chatWindow.removeChild(typingIndicator);
@@ -561,6 +561,7 @@
     </script>
 </body>
 </html>
+
 
 
 
