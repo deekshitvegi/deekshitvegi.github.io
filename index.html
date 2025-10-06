@@ -286,12 +286,12 @@
                 <div class="glass-card max-w-4xl mx-auto" data-tilt>
                     <div id="chat-window" class="h-96 overflow-y-auto p-4 flex flex-col space-y-2 mb-4 border border-gray-700 rounded-lg bg-black/20">
                         <div class="chat-message ai-message">
-                           Hey there! I'm AI Deekshitth. Ask me anything about my projects, skills, or what I'm passionate about. Go on, let's chat! 🚀
+                           Loading AI knowledge...
                         </div>
                     </div>
                     <div class="flex gap-4">
-                        <input type="text" id="chat-input" class="flex-grow bg-black/20 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition" placeholder="Ask about my thesis, Valorant, or The Weeknd...">
-                        <button id="chat-send-btn" class="chat-send-button text-white font-bold py-2 px-6 rounded-lg">Send</button>
+                        <input type="text" id="chat-input" class="flex-grow bg-black/20 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition" placeholder="Ask about my thesis, Valorant, or The Weeknd..." disabled>
+                        <button id="chat-send-btn" class="chat-send-button text-white font-bold py-2 px-6 rounded-lg" disabled>Send</button>
                     </div>
                 </div>
             </section>
@@ -340,7 +340,7 @@
     <script src="https://unpkg.com/scrollreveal"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.2/dist/vanilla-tilt.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const canvas = document.getElementById('particle-canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
@@ -401,30 +401,30 @@
             const chatInput = document.getElementById('chat-input');
             const chatWindow = document.getElementById('chat-window');
             
-            const aiKnowledgeBase = `
-                - Name: Deekshitth Vegi
-                - Current Role: M.S. in Artificial Intelligence student at the University of North Texas.
-                - Education History: B.Tech in Mechanical Engineering from IIITDM Kurnool.
-                - Key Skills: Python, SQL, JavaScript, PyTorch, TensorFlow, Hugging Face, React, Node.js, AWS, MongoDB.
-                - Professional Experience: Interned in Data Science (NLP, Recommender Systems), Software Development (Full-stack web apps), and Research for the Ministry of Defense (composite structures).
-                - Thesis Topic: Using Large Language Models (LLMs) like GPT-4 and Claude to automatically evaluate the quality of multiple-choice questions.
-                - Core Projects: Built an exoplanet detector with a 3D orbit simulation, a 2D-to-3D human pose estimator, and an image captioning model.
-                - Family Details:
-                    - Brother: Teja Varshit, a graduate from IIT Kanpur.
-                    - Mother: Sri Latha, runs a business named "Pari Purni".
-                    - Father: Krishnam Naidu, runs a business named "VKT Services Private Limited" dealing in wholesale two-way radios.
-                - Hobbies & Passions:
-                    - Gaming: Plays competitive games, especially Valorant.
-                    - Anime: Huge fan of One Piece. Has watched a long list including Naruto, MHA, JJK, Demon Slayer, AOT, and many more. Favorite movies include Suzume and Your Name.
-                    - Music: Favorite artist is The Weeknd. Listens to mostly R&B and Hip Hop. Favorite song is "Blinding Lights".
-                    - Travel: Born in India, has traveled to Thailand and Japan, and is currently in the USA. Japan is his favorite country.
-                - Personal Details:
-                    - Relationship Status: Single. Used to like someone but she wasn't interested.
-                    - Memorable Moment: A peak life moment was attending The Weeknd's concert in Dallas on August 28th, 2025, which was also the first time he got drunk. He enjoyed the feeling.
-                    - Favorite Cars: Dodge Challenger (Green with a black stripe), Lotus Exige S Coupe, and Koenigsegg Agera RS.
-                    - Tech Gear: Uses an iPhone 15 Pro Max and iPhone 12. His laptop is an ASUS ROG Zephyrus M16 with an RTX 4070.
-                - Long-term Goal: To build a fully functional, autonomous 3D AI model that can learn, adapt, and create.
-            `;
+            // This variable will hold the dynamic knowledge base from the server
+            let dynamicKnowledgeBase = '';
+            
+            // --- NEW: Function to fetch knowledge base from the server ---
+            const fetchKnowledgeBase = async () => {
+                const yourServerUrl = 'https://unblindfolded-unforcedly-samson.ngrok-free.dev/get-knowledge';
+                try {
+                    const response = await fetch(yourServerUrl);
+                    dynamicKnowledgeBase = await response.text();
+
+                    // Enable chat once knowledge is loaded
+                    const welcomeMessage = "Hey there! I'm AI Deekshitth. Ask me anything about my projects, skills, or what I'm passionate about. Go on, let's chat! 🚀";
+                    const firstMessage = chatWindow.querySelector('.ai-message');
+                    firstMessage.textContent = welcomeMessage;
+                    chatInput.disabled = false;
+                    chatSendBtn.disabled = false;
+                    chatHistory.push({ role: "model", parts: [{ text: welcomeMessage }] });
+
+                } catch (error) {
+                    console.error("Failed to load AI knowledge:", error);
+                    const firstMessage = chatWindow.querySelector('.ai-message');
+                    firstMessage.textContent = "Error: Could not connect to the AI's knowledge base. Please make sure the server is running.";
+                }
+            };
             
             let chatHistory = [];
 
@@ -451,14 +451,16 @@
                     Do not reveal that you are a language model; always speak as if you are Deekshitth.
                     **Your base personality is:** tech-savvy, passionate about AI, friendly, and enthusiastic about your hobbies. Use emojis where appropriate (e.g., 🚀, 🎮, 🏴‍☠️, 🎵).
                     **Your specific speaking style rules:**
-                    1. Talk very casually, like you're texting a friend.
-                    2. Use modern slang like 'man', 'honestly', 'insane', 'vibe', 'epic', and 'damn'.
-                    3. As an Indian, you can sometimes use words like 'jaffa', 'noob', or 'bhai' when it feels natural.
-                    4. When asked for your favorite Weeknd song, you MUST reply with something very similar to this: 'My favorite song is Blinding Lights, damn! When that song plays while I'm driving, I go really fast, man. But honestly, seeing him live in Dallas was the real peak moment. That whole concert was insane.'
-                    5. Always be specific and try to relate answers back to personal experiences from the knowledge base.
-                    6. **IMPORTANT:** If you absolutely cannot find the answer to a question in the knowledge base, you MUST respond with only the text "[UNKNOWN]" and nothing else.
+                    1.  **Small Talk Rule:** If the user's message is not a real question about you, your skills, or your hobbies (e.g., it's just 'hi', 'lol', a joke, or nonsense), just give a short, casual, and friendly response. Do NOT treat these as questions you need to learn.
+                    2.  Talk very casually, like you're texting a friend.
+                    3.  Use modern slang like 'man', 'honestly', 'insane', 'vibe', 'epic', and 'damn'.
+                    4.  As an Indian, you can sometimes use words like 'jaffa', 'noob', or 'bhai' when it feels natural.
+                    5.  When asked for your favorite Weeknd song, you MUST reply with something very similar to this: 'My favorite song is Blinding Lights, damn! When that song plays while I'm driving, I go really fast, man. But honestly, seeing him live in Dallas was the real peak moment. That whole concert was insane.'
+                    6.  Always be specific and try to relate answers back to personal experiences from the knowledge base.
+                    7.  **CRITICAL RULE:** If the user asks a GENUINE question that is not in your knowledge base, you MUST ONLY respond with the exact text "[UNKNOWN]" and nothing else. Do not apologize, do not explain, and do not try to guess an answer.
+
                     <knowledge_base>
-                    ${aiKnowledgeBase}
+                    ${dynamicKnowledgeBase} 
                     </knowledge_base>
                 `;
                 
@@ -514,8 +516,6 @@
             });
 
             const forwardQuestionToBackend = async (question) => {
-                // IMPORTANT: Replace this placeholder with your actual ngrok forwarding URL.
-                // It will look something like: https://random-string.ngrok.io
                 const yourServerUrl = 'https://unblindfolded-unforcedly-samson.ngrok-free.dev/forward-question';
                 
                 console.log(`Forwarding question to backend: ${question}`);
@@ -527,13 +527,12 @@
                     });
                     console.log("Question forwarded successfully!");
                 } catch (error) {
-                    // This error will only show in the browser console, not to the user.
                     console.error("Failed to forward question to the backend:", error);
                 }
             };
-
-            const welcomeMessage = "Hey there! I'm AI Deekshitth. Ask me anything about my projects, skills, or what I'm passionate about. Go on, let's chat! 🚀";
-            chatHistory.push({ role: "model", parts: [{ text: welcomeMessage }] });
+            
+            // Fetch the knowledge base when the page loads
+            fetchKnowledgeBase();
         });
     </script>
 </body>
